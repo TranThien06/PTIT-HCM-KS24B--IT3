@@ -1,3 +1,13 @@
+// Check login state on page load
+window.onload = function () {
+    const loggedInUser = localStorage.getItem("loggedInUser");
+    if (loggedInUser) {
+        showForm('home');
+    } else {
+        showForm('login');
+    }
+};
+
 function validateRegisterForm() {
     const firstName = document.getElementById("firstName").value.trim();
     const lastName = document.getElementById("lastName").value.trim();
@@ -50,15 +60,30 @@ function validateRegisterForm() {
     users.push({ firstName, lastName, email, password });
     localStorage.setItem("users", JSON.stringify(users));
 
-    alert("Đăng ký thành công!");
-    document.querySelector("#register-form form").reset();
+    Swal.fire({
+        title: 'Thành công!',
+        text: 'Đăng ký thành công! Bạn có muốn chuyển sang trang đăng nhập?',
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonText: 'Có',
+        cancelButtonText: 'Không'
+    }).then((result) => {
+        document.querySelector("#register-form form").reset();
+        if (result.isConfirmed) {
+            showForm('login');
+        }
+    });
+
     return false;
 }
 
 function showForm(type) {
     document.getElementById("login-form").style.display = type === 'login' ? 'block' : 'none';
     document.getElementById("register-form").style.display = type === 'register' ? 'block' : 'none';
-    document.getElementById("home-page").style.display = 'none';
+    document.getElementById("home-page").style.display = type === 'home' ? 'block' : 'none';
+    document.querySelector(".btn-login").style.display = type === 'login' || type === 'register' ? 'inline-block' : 'none';
+    document.querySelector(".btn-register").style.display = type === 'login' || type === 'register' ? 'inline-block' : 'none';
+    document.querySelector(".btn-logout").style.display = type === 'home' ? 'inline-block' : 'none';
 }
 
 function validateLoginForm() {
@@ -70,14 +95,61 @@ function validateLoginForm() {
     const user = users.find(user => user.email === emailInput && user.password === passwordInput);
 
     if (!user) {
-        alert("Email hoặc mật khẩu không đúng");
+        Swal.fire({
+            title: 'Lỗi!',
+            text: 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
         return false;
     }
 
-    document.getElementById("login-form").style.display = "none";
-    document.getElementById("register-form").style.display = "none";
-    document.getElementById("home-page").style.display = "block";
+    // Store logged-in user in localStorage
+    localStorage.setItem("loggedInUser", emailInput);
 
-    document.querySelector(".nav-buttons").style.display = "none";
+    Swal.fire({
+        title: 'Thành công!',
+        text: 'Đăng nhập thành công!',
+        icon: 'success',
+        confirmButtonText: 'OK'
+    }).then(() => {
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "none";
+        document.getElementById("home-page").style.display = "block";
+
+        document.querySelector(".btn-login").style.display = "none";
+        document.querySelector(".btn-register").style.display = "none";
+        document.querySelector(".btn-logout").style.display = "inline-block";
+    });
+
     return false;
+}
+
+function logout() {
+    Swal.fire({
+        title: 'Xác nhận',
+        text: 'Bạn có chắc chắn muốn đăng xuất?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Có',
+        cancelButtonText: 'Không'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Clear logged-in user from localStorage
+            localStorage.removeItem("loggedInUser");
+            document.getElementById("home-page").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+            document.getElementById("register-form").style.display = "none";
+            document.querySelector(".btn-login").style.display = "inline-block";
+            document.querySelector(".btn-register").style.display = "inline-block";
+            document.querySelector(".btn-logout").style.display = "none";
+
+            Swal.fire({
+                title: 'Thành công!',
+                text: 'Bạn đã đăng xuất thành công.',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
 }
